@@ -11,11 +11,7 @@
        http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.0.xsd
        ">
 
-    <!--
-         ==========================================================
-           Context Globals
-         ==========================================================
-        -->
+
     <context:component-scan base-package="org.springframework.integration.activiti.namespace.outbound"/>
 
     <context:property-placeholder location="db.properties"/>
@@ -29,8 +25,18 @@
         <int:queue capacity="100"/>
     </int:channel>
 
-    <!--<int:outbound-channel-adapter ref="processStartingOutboundChannelAdapter" channel="triggerChannel"/>-->
 
+    <!--
+     the mapped-process-variables is interesting because it demonstrates that
+     customerId, customerFirstName, and customerLastName are mapped, while customerAge is not.
+
+     This of course could have been rewritten as customer*, to grab all of them.
+
+     Additionaly, the message send to this adapter has the name of the proces definition to start as a header,
+     ActivitiConstants#WELL_KNOWN_PROCESS_DEFINITION_NAME_HEADER_KEY. If it hadn't, then an error would have been thrown
+     because no process-definition attribute is specified on this adapter declaration, either.
+
+    -->
     <activiti:outbound-channel-adapter channel="triggerChannel" process-engine="processEngine"  mapped-process-variables="customerId,customer*Name"/>
 
 </beans>
