@@ -20,6 +20,7 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.integration.MessageHeaders;
 import org.springframework.integration.activiti.ActivitiConstants;
 import org.springframework.integration.activiti.ProcessSupport;
+import org.springframework.integration.activiti.util.ActivityExecutionFactoryBean;
 import org.springframework.util.Assert;
 import org.springframework.util.PatternMatchUtils;
 import org.springframework.util.StringUtils;
@@ -35,16 +36,20 @@ import java.util.*;
  * <p/>
  * They accept exact name Strings or simple patterns (e.g. "start*", "*end", or "*").
  * <p/>
- * By default all headers in {@link         org.springframework.integration.activiti.ActivitiConstants} will be accepted.
+ * By default all headers in {@link org.springframework.integration.activiti.ActivitiConstants} will be accepted.
  * <p/>
  * Any outbound header that should be mapped must be configured explicitly. Note that the outbound mapping only writes
- * String header values into attributes on the SoapHeader. For anything more advanced,
- * one should implement the HeaderMapper interface directly.
+ * String header values into attributes on the header. For anything more advanced, one should implement the HeaderMapper interface directly.
  *
  * @author Josh Long
  * @since 5.1
  */
 public class DefaultProcessVariableHeaderMapper implements ProcessVariableHeaderMapper, InitializingBean {
+
+    /**
+     * cached length of the header prefix
+     */
+    private int wellKnownHeaderPrefixLength;
 
     /**
      * all headers that we want to forward as process variables. None, by default, as headers may be rich objects where as process variables <em>should</em> be lightweight (primitives, for example)
@@ -68,26 +73,20 @@ public class DefaultProcessVariableHeaderMapper implements ProcessVariableHeader
     private boolean includeHeadersWithWellKnownPrefix = true;
 
     /**
-     * headers that are automatically propagated, if so configured
-     */
-    private Set<String> wellKnownActivitiHeaders =
-            new HashSet<String>(Arrays.asList(ActivitiConstants.WELL_KNOWN_ACTIVITY_ID_HEADER_KEY,
-                                                     ActivitiConstants.WELL_KNOWN_EXECUTION_ID_HEADER_KEY,
-                                                     ActivitiConstants.WELL_KNOWN_PROCESS_INSTANCE_ID_HEADER_KEY,
-                                                     ActivitiConstants.WELL_KNOWN_PROCESS_DEFINITION_ID_HEADER_KEY,
-                                                     ActivitiConstants.WELL_KNOWN_PROCESS_DEFINITION_NAME_HEADER_KEY));
-
-    /**
      * this shall be a thread-safe proxy so that this class may be configured once and then reused in a thread-safe way through subsequent accesses
      * and also take advantage of unit testing.
      */
     private volatile ActivityExecution activitiExecution;
 
-
     /**
-     * cached length of the header prefix
+     * headers that are automatically propagated, if so configured
      */
-    private int wellKnownHeaderPrefixLength;
+    private Set<String> wellKnownActivitiHeaders =
+            new HashSet<String>(Arrays.asList(ActivitiConstants.WELL_KNOWN_ACTIVITY_ID_HEADER_KEY,
+                                         ActivitiConstants.WELL_KNOWN_EXECUTION_ID_HEADER_KEY,
+                                         ActivitiConstants.WELL_KNOWN_PROCESS_INSTANCE_ID_HEADER_KEY,
+                                         ActivitiConstants.WELL_KNOWN_PROCESS_DEFINITION_ID_HEADER_KEY,
+                                         ActivitiConstants.WELL_KNOWN_PROCESS_DEFINITION_NAME_HEADER_KEY));
 
     private boolean matchesAny(String[] patterns, String candidate) {
         for (String pattern : patterns) {
@@ -95,7 +94,6 @@ public class DefaultProcessVariableHeaderMapper implements ProcessVariableHeader
                 return true;
             }
         }
-
         return false;
     }
 
@@ -103,6 +101,18 @@ public class DefaultProcessVariableHeaderMapper implements ProcessVariableHeader
         setCurrentActivityExecution(e);
     }
 
+    public DefaultProcessVariableHeaderMapper() {
+        try {
+            ActivityExecutionFactoryBean activityExecutionFactoryBean = new ActivityExecutionFactoryBean();
+            setCurrentActivityExecution(activityExecutionFactoryBean.getObject() );
+        } catch (Throwable throwable) {
+
+            if(log.isErrorEnabled())
+                log.error("Exception occurred when trying to invoke "+ ActivityExecutionFactoryBean.class.getName()+"#getObject()");
+
+            throw new RuntimeException(throwable);
+        }
+    }
     /**
      * whether or not we should include fields that begin with the {@link #prefix}
      *
@@ -127,8 +137,13 @@ public class DefaultProcessVariableHeaderMapper implements ProcessVariableHeader
                 String pvName = messageHeaderKey.startsWith(prefix)
                                         ? messageHeaderKey.substring(wellKnownHeaderPrefixLength)
                                         : messageHeaderKey;
-
                 procVars.put(pvName, headers.get(messageHeaderKey));
+
+                if (log.isDebugEnabled())
+                    log.debug( String.format("mapping header '%s' to process variable '%s'" , messageHeaderKey, pvName));
+            } else {
+                if (log.isDebugEnabled())
+                    log.debug( String.format("NOT mapping header '%s' to process variable" , messageHeaderKey ));
             }
         }
 
@@ -188,7 +203,7 @@ public class DefaultProcessVariableHeaderMapper implements ProcessVariableHeader
     }
 
     public void afterPropertiesSet() throws Exception {
-        // redundant but also ensures any side effects are up to date
+        // redundant but affords a chance to setup side effects of setting the prefix, like the wellKnownHeaderPrefixLength.
         setPrefix(this.prefix);
     }
 

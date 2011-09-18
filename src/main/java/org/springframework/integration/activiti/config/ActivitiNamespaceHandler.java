@@ -17,12 +17,13 @@ package org.springframework.integration.activiti.config;
 
 import org.springframework.beans.factory.support.AbstractBeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
-import org.springframework.beans.factory.xml.AbstractSingleBeanDefinitionParser;
 import org.springframework.beans.factory.xml.NamespaceHandlerSupport;
 import org.springframework.beans.factory.xml.ParserContext;
 import org.springframework.integration.activiti.adapter.ProcessStartingOutboundChannelAdapter;
+import org.springframework.integration.activiti.mapping.DefaultProcessVariableHeaderMapper;
 import org.springframework.integration.config.xml.AbstractOutboundChannelAdapterParser;
 import org.springframework.integration.config.xml.IntegrationNamespaceUtils;
+import org.springframework.util.StringUtils;
 import org.w3c.dom.Element;
 
 /**
@@ -35,11 +36,50 @@ import org.w3c.dom.Element;
 public class ActivitiNamespaceHandler extends NamespaceHandlerSupport {
 
     public void init() {
-        this.registerBeanDefinitionParser("inbound-asyncGateway", new ActivitiInboundGatewayParser());
-        this.registerBeanDefinitionParser("adapter-channel-adapter", new ActivitiOutboundChannelAdapterParser());
+        registerBeanDefinitionParser("outbound-channel-adapter", new ProcessLaunchingOutboundChannelAdapterParser());
     }
+}
 
-    private static class ActivitiOutboundChannelAdapterParser extends AbstractOutboundChannelAdapterParser {
+class ProcessLaunchingOutboundChannelAdapterParser extends AbstractOutboundChannelAdapterParser {
+    static private String HEADER_MAPPER_PROPERTY = "processVariableHeaderMapper";
+    static private String MAPPED_PROCESS_VARIABLES_ATTR = "mapped-process-variables";
+
+    @Override
+    protected AbstractBeanDefinition parseConsumer(Element element, ParserContext parserContext) {
+
+        BeanDefinitionBuilder builder = BeanDefinitionBuilder.genericBeanDefinition(ProcessStartingOutboundChannelAdapter.class.getName());
+
+        IntegrationNamespaceUtils.setReferenceIfAttributeDefined(builder, element, "process-engine");
+        IntegrationNamespaceUtils.setValueIfAttributeDefined(builder, element, "process-definition-name");
+
+        // -------------------------------------------------------------
+        // HEADER MAPPERS
+        String headerMapper = element.getAttribute("header-mapper");
+        String mappedProcessVariables = IntegrationNamespaceUtils.getTextFromAttributeOrNestedElement(element, MAPPED_PROCESS_VARIABLES_ATTR, parserContext);
+        if (StringUtils.hasText(headerMapper)) {
+            if (StringUtils.hasText(mappedProcessVariables)) {
+                parserContext.getReaderContext().error("the 'mapped-process-variables' attribute is not allowed when a 'header-mapper' has been specified", parserContext.extractSource(element));
+            }
+            builder.addPropertyReference(HEADER_MAPPER_PROPERTY , headerMapper);
+        }
+
+        if (StringUtils.hasText(mappedProcessVariables)) {
+            BeanDefinitionBuilder headerMapperBuilder = BeanDefinitionBuilder.genericBeanDefinition(DefaultProcessVariableHeaderMapper.class.getName());
+            IntegrationNamespaceUtils.setValueIfAttributeDefined(headerMapperBuilder, element, MAPPED_PROCESS_VARIABLES_ATTR, "headerToProcessVariableNames");
+            builder.addPropertyValue(HEADER_MAPPER_PROPERTY , headerMapperBuilder.getBeanDefinition());
+        }
+
+        return builder.getBeanDefinition();
+    }
+}
+
+
+//    public void init() {
+//     //   this.registerBeanDefinitionParser("inbound-asyncGateway", new ActivitiInboundGatewayParser());
+//       // this.registerBeanDefinitionParser("adapter-channel-adapter", new ActivitiOutboundChannelAdapterParser());
+//    }
+
+/*  private static class ActivitiOutboundChannelAdapterParser extends AbstractOutboundChannelAdapterParser {
         @Override
         protected AbstractBeanDefinition parseConsumer(Element element, ParserContext parserContext) {
             BeanDefinitionBuilder builder = BeanDefinitionBuilder.genericBeanDefinition(ProcessStartingOutboundChannelAdapter.class.getName());
@@ -70,4 +110,4 @@ public class ActivitiNamespaceHandler extends NamespaceHandlerSupport {
             IntegrationNamespaceUtils.setValueIfAttributeDefined(builder, element, "forward-process-variables-as-message-headers");
         }
     }
-}
+}*/

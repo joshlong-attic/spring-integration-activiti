@@ -31,10 +31,62 @@
                 schemaLocation="http://www.springframework.org/schema/integration/spring-integration-2.0.xsd"/>
 
 
+    <!-- First thing: the ProcessManager impl, which launches a BPMN process from -->
+
+    <xsd:element name="outbound-channel-adapter">
+
+        <xsd:annotation><xsd:documentation><![CDATA[ Builds an outbound-channel-adapter that starts a process instance with the appropriate message headers mapped to process variables on receipt of a Spring Integration Message ]]></xsd:documentation> </xsd:annotation>
+
+        <xsd:complexType>
+            <xsd:attribute name="id" type="xsd:string"/>
+            <xsd:attribute name="channel" use="required" type="xsd:string">
+                <xsd:annotation>
+                    <xsd:appinfo>
+                        <tool:annotation kind="ref">
+                            <tool:expected-type type="org.springframework.integration.core.MessageChannel"/>
+                        </tool:annotation>
+                    </xsd:appinfo>
+                </xsd:annotation>
+            </xsd:attribute>
+            <xsd:attribute name="process-engine" use="required" type="xsd:string">
+                <xsd:annotation>
+                    <xsd:appinfo>
+                        <tool:annotation kind="ref">
+                            <tool:expected-type type="org.activiti.ProcessEngine"/>
+                        </tool:annotation>
+                    </xsd:appinfo>
+                </xsd:annotation>
+            </xsd:attribute>
+            <xsd:attribute name="process-definition-name" type="xsd:string"/>
+            <xsd:attribute name="mapped-process-variables" type="xsd:string">
+				<xsd:annotation>
+					<xsd:documentation><![CDATA[
+	Comma-separated list of names of MessageHeaders to be mapped into the HttpHeaders of the HTTP request.
+	This can only be provided if the 'header-mapper' reference is not being set directly. The values in
+	this list can also be simple patterns to be matched against the header names (e.g. "foo*" or "*foo").
+	The String "HTTP_REQUEST_HEADERS" will match against any of the standard HTTP Request headers.
+					]]></xsd:documentation>
+				</xsd:annotation>
+			</xsd:attribute>
+            <xsd:attribute name="header-mapper" type="xsd:string">
+				<xsd:annotation>
+					<xsd:appinfo>
+						<tool:annotation kind="ref">
+							<tool:expected-type type="org.springframework.integration.mapping.HeaderMapper" />
+						</tool:annotation>
+					</xsd:appinfo>
+				</xsd:annotation>
+			</xsd:attribute>
+
+        </xsd:complexType>
+    </xsd:element>
+
+
+
     <!--
           adapter adapter
          -->
-    <xsd:element name="outbound-channel-adapter">
+  <!--  <xsd:element name="outbound-channel-adapter">
         <xsd:annotation>
             <xsd:documentation><![CDATA[
 
@@ -118,5 +170,5 @@
 
         </xsd:complexType>
     </xsd:element>
-
+-->
 </xsd:schema>

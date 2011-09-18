@@ -19,6 +19,7 @@ import org.springframework.integration.activiti.ActivitiConstants;
 import org.springframework.integration.activiti.mapping.ProcessVariableHeaderMapper;
 import org.springframework.integration.context.IntegrationObjectSupport;
 import org.springframework.integration.core.MessageHandler;
+import org.springframework.integration.mapping.HeaderMapper;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
@@ -35,29 +36,29 @@ import java.util.Map;
  */
 public class ProcessStartingOutboundChannelAdapter extends IntegrationObjectSupport implements MessageHandler {
 
+    /**
+     * Do you want all flows that come into this component to launch the same business process? Hard code the process name here.
+     * If this is null, the component will expect a well known header value and use that to spawn the process definition.
+     */
+    private String processDefinitionName;
+
     private String processHeaderMustNotBeNullMessage = String.format(
-                                                                            "you must specify a processDefinitionName, either through " +
-                                                                                    "an inbound header mapped to the key '%s' " +
-                                                                                    "(ActivitiConstants.WELL_KNOWN_PROCESS_DEFINITION_NAME_HEADER_KEY), " +
-                                                                                    ", or on the 'process-definition-name' property of this adapter",
-                                                                            ActivitiConstants.WELL_KNOWN_PROCESS_DEFINITION_NAME_HEADER_KEY);
+                                                        "you must specify a processDefinitionName, either through " +
+                                                        "an inbound header mapped to the key '%s' " +
+                                                        "(ActivitiConstants.WELL_KNOWN_PROCESS_DEFINITION_NAME_HEADER_KEY), " +
+                                                        ", or on the 'process-definition-name' property of this adapter",
+                                                        ActivitiConstants.WELL_KNOWN_PROCESS_DEFINITION_NAME_HEADER_KEY);
 
     /**
      * A reference to the {@link ProcessEngine} (see {@link    org.activiti.spring.ProcessEngineFactoryBean}
      */
     private ProcessEngine processEngine;
 
-    private ProcessVariableHeaderMapper processVariableHeaderMapper;
+    private HeaderMapper processVariableHeaderMapper;
 
-    public void setProcessVariableHeaderMapper(ProcessVariableHeaderMapper processVariableHeaderMapper) {
+    public void setProcessVariableHeaderMapper(HeaderMapper processVariableHeaderMapper) {
         this.processVariableHeaderMapper = processVariableHeaderMapper;
     }
-
-    /**
-     * Do you want all flows that come into this component to launch the same business process? Hard code the process name here.
-     * If this is null, the component will expect a well known header value and use that to spawn the process definition name.
-     */
-    private String processDefinitionName;
 
     @Override
     protected void onInit() throws Exception {
@@ -79,7 +80,7 @@ public class ProcessStartingOutboundChannelAdapter extends IntegrationObjectSupp
 
         String processName = (String) message.getHeaders().get(ActivitiConstants.WELL_KNOWN_PROCESS_DEFINITION_NAME_HEADER_KEY);
 
-        if ((processName == null) || !StringUtils.hasText(processName)) {
+        if (!StringUtils.hasText(processName)) {
             processName = this.processDefinitionName;
         }
 
