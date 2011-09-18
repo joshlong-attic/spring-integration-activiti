@@ -83,10 +83,10 @@ public class DefaultProcessVariableHeaderMapper implements ProcessVariableHeader
      */
     private Set<String> wellKnownActivitiHeaders =
             new HashSet<String>(Arrays.asList(ActivitiConstants.WELL_KNOWN_ACTIVITY_ID_HEADER_KEY,
-                                         ActivitiConstants.WELL_KNOWN_EXECUTION_ID_HEADER_KEY,
-                                         ActivitiConstants.WELL_KNOWN_PROCESS_INSTANCE_ID_HEADER_KEY,
-                                         ActivitiConstants.WELL_KNOWN_PROCESS_DEFINITION_ID_HEADER_KEY,
-                                         ActivitiConstants.WELL_KNOWN_PROCESS_DEFINITION_NAME_HEADER_KEY));
+                                                     ActivitiConstants.WELL_KNOWN_EXECUTION_ID_HEADER_KEY,
+                                                     ActivitiConstants.WELL_KNOWN_PROCESS_INSTANCE_ID_HEADER_KEY,
+                                                     ActivitiConstants.WELL_KNOWN_PROCESS_DEFINITION_ID_HEADER_KEY,
+                                                     ActivitiConstants.WELL_KNOWN_PROCESS_DEFINITION_NAME_HEADER_KEY));
 
     private boolean matchesAny(String[] patterns, String candidate) {
         for (String pattern : patterns) {
@@ -104,15 +104,17 @@ public class DefaultProcessVariableHeaderMapper implements ProcessVariableHeader
     public DefaultProcessVariableHeaderMapper() {
         try {
             ActivityExecutionFactoryBean activityExecutionFactoryBean = new ActivityExecutionFactoryBean();
-            setCurrentActivityExecution(activityExecutionFactoryBean.getObject() );
+            setCurrentActivityExecution(activityExecutionFactoryBean.getObject());
         } catch (Throwable throwable) {
 
-            if(log.isErrorEnabled())
-                log.error("Exception occurred when trying to invoke "+ ActivityExecutionFactoryBean.class.getName()+"#getObject()");
+            if (log.isErrorEnabled()) {
+                log.error("Exception occurred when trying to invoke " + ActivityExecutionFactoryBean.class.getName() + "#getObject()");
+            }
 
             throw new RuntimeException(throwable);
         }
     }
+
     /**
      * whether or not we should include fields that begin with the {@link #prefix}
      *
@@ -139,11 +141,13 @@ public class DefaultProcessVariableHeaderMapper implements ProcessVariableHeader
                                         : messageHeaderKey;
                 procVars.put(pvName, headers.get(messageHeaderKey));
 
-                if (log.isDebugEnabled())
-                    log.debug( String.format("mapping header '%s' to process variable '%s'" , messageHeaderKey, pvName));
+                if (log.isDebugEnabled()) {
+                    log.debug(String.format("mapping header '%s' to process variable '%s'", messageHeaderKey, pvName));
+                }
             } else {
-                if (log.isDebugEnabled())
-                    log.debug( String.format("NOT mapping header '%s' to process variable" , messageHeaderKey ));
+                if (log.isDebugEnabled()) {
+                    log.debug(String.format("NOT mapping header '%s' to process variable", messageHeaderKey));
+                }
             }
         }
 
