@@ -16,7 +16,6 @@ import org.activiti.engine.ProcessEngine;
 import org.activiti.engine.runtime.ProcessInstance;
 import org.springframework.integration.Message;
 import org.springframework.integration.activiti.ActivitiConstants;
-import org.springframework.integration.activiti.mapping.ProcessVariableHeaderMapper;
 import org.springframework.integration.context.IntegrationObjectSupport;
 import org.springframework.integration.core.MessageHandler;
 import org.springframework.integration.mapping.HeaderMapper;
@@ -43,11 +42,11 @@ public class ProcessStartingOutboundChannelAdapter extends IntegrationObjectSupp
     private String processDefinitionName;
 
     private String processHeaderMustNotBeNullMessage = String.format(
-                                                        "you must specify a processDefinitionName, either through " +
-                                                        "an inbound header mapped to the key '%s' " +
-                                                        "(ActivitiConstants.WELL_KNOWN_PROCESS_DEFINITION_NAME_HEADER_KEY), " +
-                                                        ", or on the 'process-definition-name' property of this adapter",
-                                                        ActivitiConstants.WELL_KNOWN_PROCESS_DEFINITION_NAME_HEADER_KEY);
+                                                                            "you must specify a processDefinitionName, either through " +
+                                                                                    "an inbound header mapped to the key '%s' " +
+                                                                                    "(ActivitiConstants.WELL_KNOWN_PROCESS_DEFINITION_NAME_HEADER_KEY), " +
+                                                                                    ", or on the 'process-definition-name' property of this adapter",
+                                                                            ActivitiConstants.WELL_KNOWN_PROCESS_DEFINITION_NAME_HEADER_KEY);
 
     /**
      * A reference to the {@link ProcessEngine} (see {@link    org.activiti.spring.ProcessEngineFactoryBean}
@@ -88,7 +87,16 @@ public class ProcessStartingOutboundChannelAdapter extends IntegrationObjectSupp
 
         Assert.notNull(processName, processHeaderMustNotBeNullMessage);
 
-        ProcessInstance pi = processEngine.getRuntimeService().startProcessInstanceByKey(processName, processVariablesFromHeaders);
+        // special case
+        //
+        String businessKeyHeader = ActivitiConstants.WELL_KNOWN_EXECUTION_BUSINESS_KEY_HEADER_KEY;
+        ProcessInstance pi;
+        if (message.getHeaders().containsKey(businessKeyHeader)) {
+            String businessKey = (String) message.getHeaders().get(businessKeyHeader);
+            pi = processEngine.getRuntimeService().startProcessInstanceByKey(processName,businessKey, processVariablesFromHeaders);
+        } else {
+            pi = processEngine.getRuntimeService().startProcessInstanceByKey(processName, processVariablesFromHeaders);
+        }
         logger.debug("started process instance " + pi.getProcessDefinitionId() + "having business Id of " + pi.getBusinessKey());
     }
 }

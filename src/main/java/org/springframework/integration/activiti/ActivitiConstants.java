@@ -27,6 +27,8 @@ public abstract class ActivitiConstants {
      */
     public static final String WELL_KNOWN_EXECUTION_ID_HEADER_KEY = "activiti_spring_integration_executionId";
 
+    public static final String WELL_KNOWN_EXECUTION_BUSINESS_KEY_HEADER_KEY = "activiti_spring_integration__businessKey";
+
     public static final String WELL_KNOWN_PROCESS_DEFINITION_ID_HEADER_KEY = "activiti_spring_integration_processDefinitionId";
 
     /**
