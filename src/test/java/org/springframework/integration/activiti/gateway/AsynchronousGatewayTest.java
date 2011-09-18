@@ -24,8 +24,8 @@ import org.springframework.test.context.ContextConfiguration;
 @ContextConfiguration("AsynchronuousGatewayTest-context.xml")
 public class AsynchronousGatewayTest extends AbstractGatewayTest {
 
-  @Deployment(resources = "processes/si_gateway_example.bpmn20.xml")
-  public void testAsync() throws Throwable {
-    this.doGatewayTesting();
-  }
+    @Deployment(resources = "processes/si_gateway_example.bpmn20.xml")
+    public void testAsync() throws Throwable {
+        this.doGatewayTesting();
+    }
 }

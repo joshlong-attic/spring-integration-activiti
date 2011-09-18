@@ -11,25 +11,25 @@ import java.util.Map;
 
 @Ignore
 public class AbstractGatewayTest extends AbstractSpringIntegrationActivitiTestCase {
-  private Log log = LogFactory.getLog(getClass());
+    private Log log = LogFactory.getLog(getClass());
 
-  // @Deployment(resources = "processes/si_gateway_example.bpmn20.xml")
-  public void doGatewayTesting() throws Throwable {
-    // setup
-    processEngine.getRepositoryService().createDeployment().addClasspathResource("processes/si_gateway_example.bpmn20.xml").deploy();
+    // @Deployment(resources = "processes/si_gateway_example.bpmn20.xml")
+    public void doGatewayTesting() throws Throwable {
+        // setup
+        processEngine.getRepositoryService().createDeployment().addClasspathResource("processes/si_gateway_example.bpmn20.xml").deploy();
 
-    // launch a process
-    Map<String, Object> vars = new HashMap<String, Object>();
-    vars.put("customerId", 232);
+        // launch a process
+        Map<String, Object> vars = new HashMap<String, Object>();
+        vars.put("customerId", 232);
 
-    log.debug("about to start the business process");
-    StopWatch sw = new StopWatch();
-    sw.start();
-    processEngine.getRuntimeService().startProcessInstanceByKey("sigatewayProcess", vars);
+        log.debug("about to start the business process");
+        StopWatch sw = new StopWatch();
+        sw.start();
+        processEngine.getRuntimeService().startProcessInstanceByKey("sigatewayProcess", vars);
 
-    sw.stop();
-    log.debug("total time to run the process:" + sw.getTime());
+        sw.stop();
+        log.debug("total time to run the process:" + sw.getTime());
 
-    Thread.sleep(1000 * 5);
-  }
+        Thread.sleep(1000 * 5);
+    }
 }

@@ -20,26 +20,26 @@ import org.springframework.integration.support.MessageBuilder;
 
 public class SyncActivityBehaviorMessagingGateway extends AbstractActivityBehaviorMessagingGateway {
 
-	@Override
-	protected void onExecute(ActivityExecution ex) throws Exception {
-		MessageBuilder<?> mb = doBasicOutboundMessageConstruction(ex);
-		Message<?> reply = this.messagingTemplate.sendAndReceive(this.requestChannel, mb.build());
-		ProcessSupport.signalProcessExecution(this.processEngine, ex, new TransactionAwareProcessExecutionSignallerCallback(), headerMapper, reply);
-		leave(ex); // undo the wait state nature of this class by explicitly leaving now
-	}
+    @Override
+    protected void onExecute(ActivityExecution ex) throws Exception {
+        MessageBuilder<?> mb = doBasicOutboundMessageConstruction(ex);
+        Message<?> reply = this.messagingTemplate.sendAndReceive(this.requestChannel, mb.build());
+        ProcessSupport.signalProcessExecution(this.processEngine, ex, new TransactionAwareProcessExecutionSignallerCallback(), headerMapper, reply);
+        leave(ex); // undo the wait state nature of this class by explicitly leaving now
+    }
 
-	static class TransactionAwareProcessExecutionSignallerCallback implements ProcessSupport.ProcessExecutionSignallerCallback {
-		public void signal(ProcessEngine en, ActivityExecution ex) {
-			// noop since effectively we're dismantling the wait-stateiness of the clients of this class
-		}
+    static class TransactionAwareProcessExecutionSignallerCallback implements ProcessSupport.ProcessExecutionSignallerCallback {
+        public void signal(ProcessEngine en, ActivityExecution ex) {
+            // noop since effectively we're dismantling the wait-stateiness of the clients of this class
+        }
 
-		public void setProcessVariable(ProcessEngine en, ActivityExecution ex, String k, Object o) {
-			ex.setVariable(k, o);
-		}
-	}
+        public void setProcessVariable(ProcessEngine en, ActivityExecution ex, String k, Object o) {
+            ex.setVariable(k, o);
+        }
+    }
 
-	@Override
-	protected void onInit() throws Exception {
-		// noop
-	}
+    @Override
+    protected void onInit() throws Exception {
+        // noop
+    }
 }

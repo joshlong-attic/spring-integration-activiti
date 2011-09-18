@@ -12,15 +12,15 @@ import org.activiti.spring.impl.test.SpringActivitiTestCase;
  * @since 5.3
  */
 public class AbstractSpringIntegrationActivitiTestCase extends SpringActivitiTestCase {
-	protected void assertAndEnsureCleanDb() throws Throwable {
-		CommandExecutor commandExecutor = ((ProcessEngineImpl) processEngine).getProcessEngineConfiguration().getCommandExecutorTxRequired();
-		commandExecutor.execute(new Command<Object>() {
-			public Object execute(CommandContext commandContext) {
-				DbSqlSession session = commandContext.getSession(DbSqlSession.class);
-				session.dbSchemaDrop();
-				session.dbSchemaCreate();
-				return null;
-			}
-		});
-	}
+    protected void assertAndEnsureCleanDb() throws Throwable {
+        CommandExecutor commandExecutor = ((ProcessEngineImpl) processEngine).getProcessEngineConfiguration().getCommandExecutorTxRequired();
+        commandExecutor.execute(new Command<Object>() {
+            public Object execute(CommandContext commandContext) {
+                DbSqlSession session = commandContext.getSession(DbSqlSession.class);
+                session.dbSchemaDrop();
+                session.dbSchemaCreate();
+                return null;
+            }
+        });
+    }
 }

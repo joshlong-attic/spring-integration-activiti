@@ -27,24 +27,24 @@ import org.springframework.integration.support.MessageBuilder;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
-@ContextConfiguration(  "ProcessStartingOutboundChannelAdapterTest-context.xml")
+@ContextConfiguration("ProcessStartingOutboundChannelAdapterTest-context.xml")
 @RunWith(SpringJUnit4ClassRunner.class)
 public class ProcessStartingOutboundAdapterTest extends AbstractSpringIntegrationActivitiTestCase {
 
-  @Value("#{triggerChannel}")
-  private MessageChannel messageChannel;
-	      @Autowired 	ProcessEngine pe;
-  private MessagingTemplate messagingTemplate = new MessagingTemplate();
+    @Value("#{triggerChannel}")
+    private MessageChannel messageChannel;
+    @Autowired ProcessEngine pe;
+    private MessagingTemplate messagingTemplate = new MessagingTemplate();
 
-  @Test
-  public void testOutboundAdapter() throws Throwable {
+    @Test
+    public void testOutboundAdapter() throws Throwable {
 
-    pe.getRepositoryService().createDeployment().addClasspathResource("processes/hello.bpmn20.xml").deploy() ;
+        pe.getRepositoryService().createDeployment().addClasspathResource("processes/hello.bpmn20.xml").deploy();
 
-    Message<?> msg = MessageBuilder.withPayload("hello, from " + System.currentTimeMillis())
-        .setHeader(ActivitiConstants.WELL_KNOWN_PROCESS_DEFINITION_NAME_HEADER_KEY, "hello")
-        .build();
-    messagingTemplate.send(this.messageChannel, msg);
-  }
+        Message<?> msg = MessageBuilder.withPayload("hello, from " + System.currentTimeMillis())
+                                 .setHeader(ActivitiConstants.WELL_KNOWN_PROCESS_DEFINITION_NAME_HEADER_KEY, "hello")
+                                 .build();
+        messagingTemplate.send(this.messageChannel, msg);
+    }
 
 }

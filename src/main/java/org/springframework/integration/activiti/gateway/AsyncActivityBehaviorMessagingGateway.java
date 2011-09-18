@@ -35,75 +35,75 @@ import org.springframework.util.ClassUtils;
  * Asynchronous implementation of the messaging asyncGateway -- requests don't execute in the same transaction
  *
  * @author Josh Long
- * @see ReceiveTaskActivityBehavior	the {@link ActivityBehavior} impl that ships w/ Activiti that has the machinery to wake up when signaled
+ * @see ReceiveTaskActivityBehavior    the {@link ActivityBehavior} impl that ships w/ Activiti that has the machinery to wake up when signaled
  * @see ProcessEngine the process engine instance is required to be able to use this namespace
  * @see org.activiti.spring.ProcessEngineFactoryBean - use this class to create the aforementioned ProcessEngine instance!
  */
 public class AsyncActivityBehaviorMessagingGateway extends AbstractActivityBehaviorMessagingGateway {
 
-	protected MessageHandler replyMessageHandler = new MessageHandler() {
-		private ProcessSupport.ProcessExecutionSignallerCallback processExecutionSignallerCallback =
-				new ProcessSupport.ProcessExecutionSignallerCallback() {
-					public void setProcessVariable(ProcessEngine en, ActivityExecution ex, String k, Object o) {
-						en.getRuntimeService().setVariable(ex.getId(), k, o);
-					}
+    protected MessageHandler replyMessageHandler = new MessageHandler() {
+        private ProcessSupport.ProcessExecutionSignallerCallback processExecutionSignallerCallback =
+                new ProcessSupport.ProcessExecutionSignallerCallback() {
+                    public void setProcessVariable(ProcessEngine en, ActivityExecution ex, String k, Object o) {
+                        en.getRuntimeService().setVariable(ex.getId(), k, o);
+                    }
 
-					public void signal(ProcessEngine en, ActivityExecution ex) {
-						en.getRuntimeService().signal(ex.getId());
-					}
-				};
+                    public void signal(ProcessEngine en, ActivityExecution ex) {
+                        en.getRuntimeService().signal(ex.getId());
+                    }
+                };
 
-		public void handleMessage(Message<?> message) throws MessagingException {
-			String executionId =
-					(String) message.getHeaders().get(ActivitiConstants.WELL_KNOWN_EXECUTION_ID_HEADER_KEY);
+        public void handleMessage(Message<?> message) throws MessagingException {
+            String executionId =
+                    (String) message.getHeaders().get(ActivitiConstants.WELL_KNOWN_EXECUTION_ID_HEADER_KEY);
 
-			Assert.notNull(executionId, "the messages coming into this channel must have a header equal "
-					+ "to the value of ActivitiConstants.WELL_KNOWN_EXECUTION_ID_HEADER_KEY ("
-					+ ActivitiConstants.WELL_KNOWN_EXECUTION_ID_HEADER_KEY + ")");
+            Assert.notNull(executionId, "the messages coming into this channel must have a header equal "
+                                        + "to the value of ActivitiConstants.WELL_KNOWN_EXECUTION_ID_HEADER_KEY ("
+                                        + ActivitiConstants.WELL_KNOWN_EXECUTION_ID_HEADER_KEY + ")");
 
-			Execution execution = processEngine.getRuntimeService().createExecutionQuery().executionId(executionId).singleResult();
-			ActivityExecution activityExecution = (ActivityExecution) execution;
+            Execution execution = processEngine.getRuntimeService().createExecutionQuery().executionId(executionId).singleResult();
+            ActivityExecution activityExecution = (ActivityExecution) execution;
 
-			try {
-				ProcessSupport.signalProcessExecution(processEngine, activityExecution,
-						processExecutionSignallerCallback, headerMapper, message);
-			} catch (Exception e) {
-				log.error(e);
+            try {
+                ProcessSupport.signalProcessExecution(processEngine, activityExecution,
+                                                             processExecutionSignallerCallback, headerMapper, message);
+            } catch (Exception e) {
+                log.error(e);
 
-				throw new RuntimeException(e);
-			}
-		}
-	};
+                throw new RuntimeException(e);
+            }
+        }
+    };
 
-	@Override
-	protected void onExecute(ActivityExecution execution) throws Exception {
-		MessageBuilder<?> messageBuilder = this.doBasicOutboundMessageConstruction(execution);
+    @Override
+    protected void onExecute(ActivityExecution execution) throws Exception {
+        MessageBuilder<?> messageBuilder = this.doBasicOutboundMessageConstruction(execution);
 
-		messageBuilder.setReplyChannel(this.replyChannel);
-		this.messagingTemplate.send(this.requestChannel, messageBuilder.build());
-	}
+        messageBuilder.setReplyChannel(this.replyChannel);
+        this.messagingTemplate.send(this.requestChannel, messageBuilder.build());
+    }
 
-	@Override
-	protected void onInit() throws Exception {
-		ConsumerEndpointFactoryBean consumerEndpointFactoryBean = new ConsumerEndpointFactoryBean();
+    @Override
+    protected void onInit() throws Exception {
+        ConsumerEndpointFactoryBean consumerEndpointFactoryBean = new ConsumerEndpointFactoryBean();
 
-		consumerEndpointFactoryBean.setHandler(replyMessageHandler);
-		consumerEndpointFactoryBean.setBeanClassLoader(ClassUtils.getDefaultClassLoader());
-		consumerEndpointFactoryBean.setAutoStartup(false);
-		consumerEndpointFactoryBean.setInputChannel(this.replyChannel);
+        consumerEndpointFactoryBean.setHandler(replyMessageHandler);
+        consumerEndpointFactoryBean.setBeanClassLoader(ClassUtils.getDefaultClassLoader());
+        consumerEndpointFactoryBean.setAutoStartup(false);
+        consumerEndpointFactoryBean.setInputChannel(this.replyChannel);
 
-		if (this.replyChannel instanceof PollableChannel) {
-			PollerMetadata pollerMetadata = new PollerMetadata();
+        if (this.replyChannel instanceof PollableChannel) {
+            PollerMetadata pollerMetadata = new PollerMetadata();
 
-			pollerMetadata.setReceiveTimeout(10);
-			consumerEndpointFactoryBean.setPollerMetadata(pollerMetadata);
-		}
+            pollerMetadata.setReceiveTimeout(10);
+            consumerEndpointFactoryBean.setPollerMetadata(pollerMetadata);
+        }
 
-		consumerEndpointFactoryBean.setBeanFactory(this.beanFactory);
-		consumerEndpointFactoryBean.setBeanName(this.beanName + "ConsumerEndpoint");
-		consumerEndpointFactoryBean.afterPropertiesSet();
-		consumerEndpointFactoryBean.start();
-	}
+        consumerEndpointFactoryBean.setBeanFactory(this.beanFactory);
+        consumerEndpointFactoryBean.setBeanName(this.beanName + "ConsumerEndpoint");
+        consumerEndpointFactoryBean.afterPropertiesSet();
+        consumerEndpointFactoryBean.start();
+    }
 }
 
 

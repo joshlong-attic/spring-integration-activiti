@@ -44,19 +44,21 @@ public class PrintingServiceActivator {
 
         log.debug("entering ServiceActivator:sayHello");
 
-        if (StringUtils.hasText(this.whatToPrint))
+        if (StringUtils.hasText(this.whatToPrint)) {
             log.debug(whatToPrint);
+        }
 
         Map<String, Object> headers = requestComingFromActiviti.getHeaders();
 
-        for (String k : headers.keySet())
+        for (String k : headers.keySet()) {
             log.debug(String.format("%s = %s", k, headers.get(k)));
+        }
 
         log.debug("exiting ServiceActivator:sayHello");
 
         return MessageBuilder.withPayload(requestComingFromActiviti.getPayload()).
-                copyHeadersIfAbsent(requestComingFromActiviti.getHeaders())
-                .setHeader(ActivitiConstants.WELL_KNOWN_SPRING_INTEGRATION_HEADER_PREFIX + "test", "1 + 1").
-                        build();
+                                                                                         copyHeadersIfAbsent(requestComingFromActiviti.getHeaders())
+                       .setHeader(ActivitiConstants.WELL_KNOWN_SPRING_INTEGRATION_HEADER_PREFIX + "test", "1 + 1").
+                                                                                                                          build();
     }
 }

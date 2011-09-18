@@ -19,59 +19,59 @@ import javax.sql.DataSource;
  * @author Josh Long
  */
 public class CommonConfiguration {
-  protected Log log = LogFactory.getLog(getClass());
+    protected Log log = LogFactory.getLog(getClass());
 
-  @Value("${db.url}")
-  protected String url;
+    @Value("${db.url}")
+    protected String url;
 
-  @Value("${db.password}")
-  protected String pw;
+    @Value("${db.password}")
+    protected String pw;
 
-  @Value("${db.user}")
-  protected String user;
+    @Value("${db.user}")
+    protected String user;
 
-  @PostConstruct
-  public void setup() {
-    log.debug("starting up " + getClass().getName());
-  }
+    @PostConstruct
+    public void setup() {
+        log.debug("starting up " + getClass().getName());
+    }
 
-  /**
-   * clients can override this
-   */
-  protected String getDatabaseSchemaUpdate() {
-    return SpringProcessEngineConfiguration.DB_SCHEMA_UPDATE_TRUE;
-  }
+    /**
+     * clients can override this
+     */
+    protected String getDatabaseSchemaUpdate() {
+        return SpringProcessEngineConfiguration.DB_SCHEMA_UPDATE_TRUE;
+    }
 
-  @Bean
-  public ProcessEngineFactoryBean processEngine() {
-    ProcessEngineFactoryBean processEngineFactoryBean = new ProcessEngineFactoryBean();
+    @Bean
+    public ProcessEngineFactoryBean processEngine() {
+        ProcessEngineFactoryBean processEngineFactoryBean = new ProcessEngineFactoryBean();
 
-    SpringProcessEngineConfiguration configuration = new SpringProcessEngineConfiguration();
-    configuration.setTransactionManager(dataSourceTransactionManager());
-    configuration.setDatabaseType("h2");
-    configuration.setJobExecutorActivate(false);
-    configuration.setDataSource(targetDataSource());
-    configuration.setDatabaseSchemaUpdate(getDatabaseSchemaUpdate());
-    processEngineFactoryBean.setProcessEngineConfiguration(configuration);
-    return processEngineFactoryBean;
-  }
+        SpringProcessEngineConfiguration configuration = new SpringProcessEngineConfiguration();
+        configuration.setTransactionManager(dataSourceTransactionManager());
+        configuration.setDatabaseType("h2");
+        configuration.setJobExecutorActivate(false);
+        configuration.setDataSource(targetDataSource());
+        configuration.setDatabaseSchemaUpdate(getDatabaseSchemaUpdate());
+        processEngineFactoryBean.setProcessEngineConfiguration(configuration);
+        return processEngineFactoryBean;
+    }
 
-  @Bean
-  public DataSource targetDataSource() {
-    TransactionAwareDataSourceProxy transactionAwareDataSourceProxy = new TransactionAwareDataSourceProxy();
-    SimpleDriverDataSource simpleDriverDataSource = new SimpleDriverDataSource();
-    simpleDriverDataSource.setPassword(this.pw);
-    simpleDriverDataSource.setUsername(this.user);
-    simpleDriverDataSource.setUrl(this.url);
-    simpleDriverDataSource.setDriverClass(org.h2.Driver.class);
-    transactionAwareDataSourceProxy.setTargetDataSource(simpleDriverDataSource);
-    return transactionAwareDataSourceProxy;
-  }
+    @Bean
+    public DataSource targetDataSource() {
+        TransactionAwareDataSourceProxy transactionAwareDataSourceProxy = new TransactionAwareDataSourceProxy();
+        SimpleDriverDataSource simpleDriverDataSource = new SimpleDriverDataSource();
+        simpleDriverDataSource.setPassword(this.pw);
+        simpleDriverDataSource.setUsername(this.user);
+        simpleDriverDataSource.setUrl(this.url);
+        simpleDriverDataSource.setDriverClass(org.h2.Driver.class);
+        transactionAwareDataSourceProxy.setTargetDataSource(simpleDriverDataSource);
+        return transactionAwareDataSourceProxy;
+    }
 
-  @Bean
-  public DataSourceTransactionManager dataSourceTransactionManager() {
-    DataSourceTransactionManager dataSourceTransactionManager = new DataSourceTransactionManager();
-    dataSourceTransactionManager.setDataSource(this.targetDataSource());
-    return dataSourceTransactionManager;
-  }
+    @Bean
+    public DataSourceTransactionManager dataSourceTransactionManager() {
+        DataSourceTransactionManager dataSourceTransactionManager = new DataSourceTransactionManager();
+        dataSourceTransactionManager.setDataSource(this.targetDataSource());
+        return dataSourceTransactionManager;
+    }
 }

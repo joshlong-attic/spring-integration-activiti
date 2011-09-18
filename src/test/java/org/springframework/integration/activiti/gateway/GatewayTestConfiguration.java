@@ -15,24 +15,24 @@ import org.springframework.integration.activiti.utils.PrintingServiceActivator;
 @Configuration
 public class GatewayTestConfiguration extends CommonConfiguration {
 
-  @Value("#{response}")
-  private MessageChannel replies;
+    @Value("#{response}")
+    private MessageChannel replies;
 
-  @Value("#{request}")
-  private MessageChannel requests;
+    @Value("#{request}")
+    private MessageChannel requests;
 
-  @Bean
-  public PrintingServiceActivator serviceActivator() {
-    return new PrintingServiceActivator();
-  }
-  protected
-  <T extends AbstractActivityBehaviorMessagingGateway> T configureAbstractActivityBehaviorMessagingGateway(T gateway) throws Exception {
-    gateway.setForwardProcessVariablesAsMessageHeaders(true);
-    gateway.setProcessEngine(this.processEngine().getObject());
-    gateway.setUpdateProcessVariablesFromReplyMessageHeaders(true);
-    gateway.setRequestChannel(this.requests);
-    gateway.setReplyChannel(this.replies);
-    return gateway;
-  }
+    @Bean
+    public PrintingServiceActivator serviceActivator() {
+        return new PrintingServiceActivator();
+    }
+
+    protected <T extends AbstractActivityBehaviorMessagingGateway> T configureAbstractActivityBehaviorMessagingGateway(T gateway) throws Exception {
+        gateway.setForwardProcessVariablesAsMessageHeaders(true);
+        gateway.setProcessEngine(this.processEngine().getObject());
+        gateway.setUpdateProcessVariablesFromReplyMessageHeaders(true);
+        gateway.setRequestChannel(this.requests);
+        gateway.setReplyChannel(this.replies);
+        return gateway;
+    }
 
 }

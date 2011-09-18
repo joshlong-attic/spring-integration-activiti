@@ -19,26 +19,26 @@ package org.springframework.integration.activiti;
  */
 public abstract class ActivitiConstants {
 
-	public static final String WELL_KNOWN_ACTIVITY_ID_HEADER_KEY = "activiti_spring_integration_activityId";
+    public static final String WELL_KNOWN_ACTIVITY_ID_HEADER_KEY = "activiti_spring_integration_activityId";
 
-	/**
-	 * In order for the asyncGateway to correctly signalProcessExecution execution to Activiti, it needs to the executionId so that it can look up the {@link	org.activiti.engine.runtime.Execution} instance.
-	 * the <code>executionId</code> is expected to be under this header.
-	 */
-	public static final String WELL_KNOWN_EXECUTION_ID_HEADER_KEY = "activiti_spring_integration_executionId";
+    /**
+     * In order for the asyncGateway to correctly signalProcessExecution execution to Activiti, it needs to the executionId so that it can look up the {@link    org.activiti.engine.runtime.Execution} instance.
+     * the <code>executionId</code> is expected to be under this header.
+     */
+    public static final String WELL_KNOWN_EXECUTION_ID_HEADER_KEY = "activiti_spring_integration_executionId";
 
-	public static final String WELL_KNOWN_PROCESS_DEFINITION_ID_HEADER_KEY = "activiti_spring_integration_processDefinitionId";
+    public static final String WELL_KNOWN_PROCESS_DEFINITION_ID_HEADER_KEY = "activiti_spring_integration_processDefinitionId";
 
-	/**
-	 * This is the key under which we will look up the custom <code>processDefinitionName</code> up. This value will be used to spawn
-	 */
-	public static final String WELL_KNOWN_PROCESS_DEFINITION_NAME_HEADER_KEY = "activiti_spring_integration_processDefinitionName";
+    /**
+     * This is the key under which we will look up the custom <code>processDefinitionName</code> up. This value will be used to spawn
+     */
+    public static final String WELL_KNOWN_PROCESS_DEFINITION_NAME_HEADER_KEY = "activiti_spring_integration_processDefinitionName";
 
-	public static final String WELL_KNOWN_PROCESS_INSTANCE_ID_HEADER_KEY = "activiti_spring_integration_processInstanceId";
+    public static final String WELL_KNOWN_PROCESS_INSTANCE_ID_HEADER_KEY = "activiti_spring_integration_processInstanceId";
 
-	/**
-	 * Assuming #updateProcessVariablesFromReplyMessageHeaders is true, then any {@link org.springframework.integration.MessageHeaders} header key that starts with String will be propagated as an Activiti process variable.
-	 */
-	public static final String WELL_KNOWN_SPRING_INTEGRATION_HEADER_PREFIX = "activiti_spring_integration_";
+    /**
+     * Assuming #updateProcessVariablesFromReplyMessageHeaders is true, then any {@link org.springframework.integration.MessageHeaders} header key that starts with String will be propagated as an Activiti process variable.
+     */
+    public static final String WELL_KNOWN_SPRING_INTEGRATION_HEADER_PREFIX = "activiti_spring_integration_";
 }
 
