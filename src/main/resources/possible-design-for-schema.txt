@@ -1,0 +1,82 @@
+See:
+org.springframework.integration.xml.transformer.XsltPayloadTransformer
+org.springframework.integration.xml.config.XsltPayloadTransformerParser
+
+---
+
+<http:inbound-channel-adapter id="in" channel="c" supported-methods="GET"
+   header-names="foo, bar, Content-Type" url="http://x?y=123">
+   <http:header name="foo" value="someJmsProp" />
+</http:...>
+
+<http:outbound-channel-adapter id="in" channel="c" supported-methods="GET"
+   header-names="foo, bar, Content-Type" url="http://x?y={myY}">
+    <http:uri-variable name="myY" value="${props.y}"/>
+    <http:uri-variable name="myY" expression="headers.y + 'blah'"/>
+</http:outbound-channel-adapter>
+
+<jms:inbound-channel-adapter id="in" channel="c" destination-name="queue.A"
+   header-names="foo, bar, Content-Type">
+   <jms:header name="foo" value="someJmsProp" />
+</jms:..>
+
+=========
+
+public interface MyEntryPoint {
+    public void startProc(@Payload String s, @Header("x-foo") String foo);
+}
+
+<header-enricher ...>
+   <header name="x-foo" value="123" overwrite="false"/>
+</header-enricher>
+
+<act:outbound-channel-adapter channel="c" process-definition-name="myProc" process-variable-headers="x-*"/>
+
+<act:outbound-channel-adapter channel="c" process-definition-name="myProc">
+   <act:process-variable-header name="foo" value="123"/>
+   <act:process-variable-header name="bar" expression="headers.bar + 'x'"/>
+</act:...>
+
+<act:inbound-gateway request-channel="fromActiviti" reply-channel="toActiviti" request-process-variable-names="foo*" reply-process-variable-names="bar*"/>
+
+<act:inbound-gateway request-channel="fromActiviti" reply-channel="toActiviti">
+    <act:request-process-variable-headers>
+        <!-- diff element in schema no value option -->
+        <act:process-variable-header name="baz" variable-name="boo"/>
+        <!-- processVariables is the rootObject for SpEL, same as #root.someKey... -->
+        <act:process-variable-header name="bar" expression="someKey.toUpperCase()"/>
+    </act..>
+    <act:reply-process-variable-headers>
+	   <act:process-variable-header name="foo" value="123"/>
+	   <act:process-variable-header name="bar" expression="headers.bar + 'x'"/>
+    </act..>
+</act:inbound-gateway>
+
+<act:inbound-gateway request-channel="fromActiviti" reply-channel="toActiviti">
+    <act:request-header-mappings>
+        <!-- diff element in schema no value option -->
+        <act:pr name="baz" variable-name="boo"/>
+        <!-- processVariables is the rootObject for SpEL, same as #root.someKey... -->
+        <act:process-variable-header name="bar" expression="someKey.toUpperCase()"/>
+    </act..>
+    <act:reply-process-variable-headers>
+	   <act:process-variable-header name="foo" value="123"/>
+	   <act:process-variable-header name="bar" expression="headers.bar + 'x'"/>
+    </act..>
+</act:inbound-gateway>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
