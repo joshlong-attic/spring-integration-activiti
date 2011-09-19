@@ -104,7 +104,9 @@ public class DefaultProcessVariableHeaderMapper implements ProcessVariableHeader
     public DefaultProcessVariableHeaderMapper() {
         try {
             ActivityExecutionFactoryBean activityExecutionFactoryBean = new ActivityExecutionFactoryBean();
+            activityExecutionFactoryBean.afterPropertiesSet();
             setCurrentActivityExecution(activityExecutionFactoryBean.getObject());
+
         } catch (Throwable throwable) {
 
             if (log.isErrorEnabled()) {
@@ -197,7 +199,13 @@ public class DefaultProcessVariableHeaderMapper implements ProcessVariableHeader
                                       ? this.prefix + mhk
                                       : mhk;
 
+                if( log.isDebugEnabled())
+                    log.debug(String.format( "mapping process variable '%s' to header '%s'", hKey,  (mhk)));
+
                 headers.put(hKey, processVariables.get(mhk));
+            } else {
+                if(log.isDebugEnabled())
+                log.debug(String.format( "NOT mapping process variable '%s' to header",   (mhk)));
             }
         }
 

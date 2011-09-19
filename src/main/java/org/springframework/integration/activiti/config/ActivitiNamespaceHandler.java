@@ -15,12 +15,17 @@
  */
 package org.springframework.integration.activiti.config;
 
+import org.springframework.beans.factory.config.TypedStringValue;
 import org.springframework.beans.factory.support.AbstractBeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.xml.NamespaceHandlerSupport;
 import org.springframework.beans.factory.xml.ParserContext;
 import org.springframework.integration.activiti.adapter.ProcessStartingOutboundChannelAdapter;
+import org.springframework.integration.activiti.gateway.AbstractActivityBehaviorMessagingGateway;
+import org.springframework.integration.activiti.gateway.AsyncActivityBehaviorMessagingGateway;
+import org.springframework.integration.activiti.gateway.SyncActivityBehaviorMessagingGateway;
 import org.springframework.integration.activiti.mapping.DefaultProcessVariableHeaderMapper;
+import org.springframework.integration.config.xml.AbstractInboundGatewayParser;
 import org.springframework.integration.config.xml.AbstractOutboundChannelAdapterParser;
 import org.springframework.integration.config.xml.IntegrationNamespaceUtils;
 import org.springframework.util.StringUtils;
@@ -37,12 +42,13 @@ public class ActivitiNamespaceHandler extends NamespaceHandlerSupport {
 
     public void init() {
         registerBeanDefinitionParser("outbound-channel-adapter", new ProcessLaunchingOutboundChannelAdapterParser());
+        registerBeanDefinitionParser("inbound-gateway", new InboundGatewayParser());
     }
 }
 
 class ProcessLaunchingOutboundChannelAdapterParser extends AbstractOutboundChannelAdapterParser {
     static private String HEADER_MAPPER_PROPERTY = "processVariableHeaderMapper";
-    static private String MAPPED_PROCESS_VARIABLES_ATTR = "mapped-process-variables";
+    static private String MAPPED_PROCESS_VARIABLES_ATTR = "mapped-message-headers";
 
     @Override
     protected AbstractBeanDefinition parseConsumer(Element element, ParserContext parserContext) {
@@ -60,54 +66,80 @@ class ProcessLaunchingOutboundChannelAdapterParser extends AbstractOutboundChann
             if (StringUtils.hasText(mappedProcessVariables)) {
                 parserContext.getReaderContext().error("the 'mapped-process-variables' attribute is not allowed when a 'header-mapper' has been specified", parserContext.extractSource(element));
             }
-            builder.addPropertyReference(HEADER_MAPPER_PROPERTY , headerMapper);
+            builder.addPropertyReference(HEADER_MAPPER_PROPERTY, headerMapper);
         }
 
         if (StringUtils.hasText(mappedProcessVariables)) {
             BeanDefinitionBuilder headerMapperBuilder = BeanDefinitionBuilder.genericBeanDefinition(DefaultProcessVariableHeaderMapper.class.getName());
             IntegrationNamespaceUtils.setValueIfAttributeDefined(headerMapperBuilder, element, MAPPED_PROCESS_VARIABLES_ATTR, "headerToProcessVariableNames");
-            builder.addPropertyValue(HEADER_MAPPER_PROPERTY , headerMapperBuilder.getBeanDefinition());
+            builder.addPropertyValue(HEADER_MAPPER_PROPERTY, headerMapperBuilder.getBeanDefinition());
         }
 
         return builder.getBeanDefinition();
     }
 }
 
+/**
+ * Parser for the inbound gateway, which has two modes,
+ * one synchronous and one asynchronous. The default is the asynchronous mode.
+ *
+ * @author Josh Long
+ */
+class InboundGatewayParser extends AbstractInboundGatewayParser {
 
-//    public void init() {
-//     //   this.registerBeanDefinitionParser("inbound-asyncGateway", new ActivitiInboundGatewayParser());
-//       // this.registerBeanDefinitionParser("adapter-channel-adapter", new ActivitiOutboundChannelAdapterParser());
-//    }
+    static private String HEADER_MAPPER_HEADER = "header-mapper" ;
 
-/*  private static class ActivitiOutboundChannelAdapterParser extends AbstractOutboundChannelAdapterParser {
-        @Override
-        protected AbstractBeanDefinition parseConsumer(Element element, ParserContext parserContext) {
-            BeanDefinitionBuilder builder = BeanDefinitionBuilder.genericBeanDefinition(ProcessStartingOutboundChannelAdapter.class.getName());
-            IntegrationNamespaceUtils.setReferenceIfAttributeDefined(builder, element, "process-engine");
-            IntegrationNamespaceUtils.setValueIfAttributeDefined(builder, element, "process-definition-name");
-            return builder.getBeanDefinition();
-        }
+    static private String MAPPED_OUTBOUND_MESSAGE_HEADERS = "mapped-outbound-message-headers";
+
+    static private String MAPPED_INBOUND_MESSAGE_HEADERS = "mapped-inbound-process-variables";
+
+    @Override
+    protected boolean isEligibleAttribute(String attributeName) {
+        return !attributeName.equals(MAPPED_INBOUND_MESSAGE_HEADERS) &&
+               !attributeName.equals(MAPPED_OUTBOUND_MESSAGE_HEADERS) &&
+               super.isEligibleAttribute(attributeName);
     }
 
-    private static class ActivitiInboundGatewayParser extends AbstractSingleBeanDefinitionParser {
-        @Override
-        protected String getBeanClassName(Element element) {
-            return null;//ActivityBehaviorMessagingGatewayFactoryBean.class.getName();
+    // bleargh cheating a bit to get access to the ParserContext
+    @Override
+    protected void doParse(Element element, ParserContext parserContext, BeanDefinitionBuilder builder) {
+
+        super.doParse(element, parserContext, builder);
+
+        IntegrationNamespaceUtils.setReferenceIfAttributeDefined(builder, element, "process-engine");
+
+        TypedStringValue boolTrue = new TypedStringValue("true");
+
+        // forget about header-mapper for now. simpler to focus on this
+        BeanDefinitionBuilder headerMapperBuilder = BeanDefinitionBuilder.genericBeanDefinition(DefaultProcessVariableHeaderMapper.class.getName());
+
+        // inbound (e.g., from Activiti into SI)
+        String inboundProcessVariablesToHeaders = IntegrationNamespaceUtils.getTextFromAttributeOrNestedElement(element, MAPPED_INBOUND_MESSAGE_HEADERS, parserContext);
+        if (StringUtils.hasText(inboundProcessVariablesToHeaders)) {
+            builder.addPropertyValue("forwardProcessVariablesAsMessageHeaders", boolTrue);
+            IntegrationNamespaceUtils.setValueIfAttributeDefined(headerMapperBuilder, element, MAPPED_INBOUND_MESSAGE_HEADERS, "processVariableToHeaderNames");
         }
 
-        @Override
-        protected boolean shouldGenerateIdAsFallback() {
-            return true;
+        // outbound (e.g., SI back to Activiti)
+        String outboundHeadersToProcessVariables = IntegrationNamespaceUtils.getTextFromAttributeOrNestedElement(element, MAPPED_OUTBOUND_MESSAGE_HEADERS, parserContext);
+        if (StringUtils.hasText(outboundHeadersToProcessVariables)) {
+            builder.addPropertyValue("updateProcessVariablesFromReplyMessageHeaders", boolTrue);
+            IntegrationNamespaceUtils.setValueIfAttributeDefined(headerMapperBuilder, element, MAPPED_OUTBOUND_MESSAGE_HEADERS, "headerToProcessVariableNames");
         }
-
-        @Override
-        protected void doParse(Element element, ParserContext parserContext, BeanDefinitionBuilder builder) {
-            IntegrationNamespaceUtils.setReferenceIfAttributeDefined(builder, element, "request-channel");
-            IntegrationNamespaceUtils.setReferenceIfAttributeDefined(builder, element, "reply-channel");
-            IntegrationNamespaceUtils.setReferenceIfAttributeDefined(builder, element, "process-engine");
-            IntegrationNamespaceUtils.setValueIfAttributeDefined(builder, element, "update-process-variables-from-reply-message-headers");
-            IntegrationNamespaceUtils.setValueIfAttributeDefined(builder, element, "async");
-            IntegrationNamespaceUtils.setValueIfAttributeDefined(builder, element, "forward-process-variables-as-message-headers");
-        }
+        builder.addPropertyValue("headerMapper", headerMapperBuilder.getBeanDefinition());
     }
-}*/
+
+
+    @Override
+    protected String getBeanClassName(Element element) {
+        String synchronousAttribute = element.getAttribute("synchronous"); // default is false, as asynchronous is a safer, more powerful option.
+        boolean synchronous = StringUtils.hasText(synchronousAttribute) && Boolean.parseBoolean(synchronousAttribute);
+
+        Class<? extends AbstractActivityBehaviorMessagingGateway> mgwClass = synchronous ?
+                                                                                     SyncActivityBehaviorMessagingGateway.class :
+                                                                                     AsyncActivityBehaviorMessagingGateway.class;
+        return mgwClass.getName();
+    }
+
+
+}

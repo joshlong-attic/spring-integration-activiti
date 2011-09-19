@@ -140,8 +140,7 @@ public abstract class AbstractActivityBehaviorMessagingGateway extends ReceiveTa
     }
 
     @SuppressWarnings("unused")
-    public void setUpdateProcessVariablesFromReplyMessageHeaders(
-                                                                        boolean updateProcessVariablesFromReplyMessageHeaders) {
+    public void setUpdateProcessVariablesFromReplyMessageHeaders( boolean updateProcessVariablesFromReplyMessageHeaders) {
         this.updateProcessVariablesFromReplyMessageHeaders = updateProcessVariablesFromReplyMessageHeaders;
     }
 
@@ -222,5 +221,9 @@ public abstract class AbstractActivityBehaviorMessagingGateway extends ReceiveTa
     protected MessageBuilder<?> doBasicOutboundMessageConstruction(ActivityExecution execution) throws Exception {
         Map<String, ?> headers = headerMapper.toHeaders(execution.getVariables());
         return MessageBuilder.withPayload(execution).copyHeadersIfAbsent(contributeHeadersForOutboundMessage(execution)).copyHeaders(headers);
+    }
+
+    public void setHeaderMapper(ProcessVariableHeaderMapper headerMapper) {
+        this.headerMapper = headerMapper;
     }
 }

@@ -32,12 +32,26 @@ import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
 
 /**
- * Asynchronous implementation of the messaging asyncGateway -- requests don't execute in the same transaction
+ * Asynchronous inbound gateway. When the wait state that this gateway provides
+ * is reached, the gateway sends a message <em>into</em> Spring Integration
+ * on the {@link #requestChannel}, which can react to it like you might any
+ * other <em>inbound</em> event (like receiving an email, or an AMQP message.).
+ * The Activiti wait-state is paused, and stops execution, pending a
+ * {@link org.activiti.engine.RuntimeService#signal(String)}, which this gateway
+ * will do when a <em>reply</em> message is sent on the {@link #replyChannel}
+ * <p/>
+ * There is an alternative to this gateway - the {@link SyncActivityBehaviorMessagingGateway} -
+ * that (for most situations) is identical, except that instead of pausing on the wait-state,
+ * the thread stays open and the reply is expected back quickly, otherwise you risk starvation of the thread pool.
+ * The benefit to this is that, from the perspective of the workflow engine, everything happens
+ * inside of one transaction. If you're not concerned with having a wait-state execute like a regular state,
+ * then ignore that one and prefer this asynchronous gateway.
  *
  * @author Josh Long
- * @see ReceiveTaskActivityBehavior    the {@link ActivityBehavior} impl that ships w/ Activiti that has the machinery to wake up when signaled
+ * @see ReceiveTaskActivityBehavior the {@link ActivityBehavior} implementation that ships with Activiti that has the machinery to wake up when signaled
  * @see ProcessEngine the process engine instance is required to be able to use this namespace
  * @see org.activiti.spring.ProcessEngineFactoryBean - use this class to create the aforementioned ProcessEngine instance!
+ *
  */
 public class AsyncActivityBehaviorMessagingGateway extends AbstractActivityBehaviorMessagingGateway {
 
@@ -58,8 +72,8 @@ public class AsyncActivityBehaviorMessagingGateway extends AbstractActivityBehav
                     (String) message.getHeaders().get(ActivitiConstants.WELL_KNOWN_EXECUTION_ID_HEADER_KEY);
 
             Assert.notNull(executionId, "the messages coming into this channel must have a header equal "
-                                        + "to the value of ActivitiConstants.WELL_KNOWN_EXECUTION_ID_HEADER_KEY ("
-                                        + ActivitiConstants.WELL_KNOWN_EXECUTION_ID_HEADER_KEY + ")");
+                                                + "to the value of ActivitiConstants.WELL_KNOWN_EXECUTION_ID_HEADER_KEY ("
+                                                + ActivitiConstants.WELL_KNOWN_EXECUTION_ID_HEADER_KEY + ")");
 
             Execution execution = processEngine.getRuntimeService().createExecutionQuery().executionId(executionId).singleResult();
             ActivityExecution activityExecution = (ActivityExecution) execution;

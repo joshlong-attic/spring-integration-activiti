@@ -10,33 +10,33 @@
        http://www.springframework.org/schema/integration/activiti http://www.springframework.org/schema/integration/activiti/spring-integration-activiti.xsd
        http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.0.xsd
        ">
-
-
-    <context:component-scan base-package="org.springframework.integration.activiti.namespace.outbound"/>
-
     <context:property-placeholder location="db.properties"/>
+    <context:annotation-config/>
 
-    <int:poller default="true">
-        <int:interval-trigger interval="1000"/>
-    </int:poller>
+    <bean class="org.springframework.integration.activiti.CommonConfiguration"/>
 
+    <activiti:inbound-gateway
+            id ="gateway"
+            process-engine="processEngine"
+            mapped-inbound-process-variables="customerId,orderNo,s*"
+            mapped-outbound-message-headers="s*"
+            request-channel="request"
+            reply-channel="response"
+    />
 
-    <int:channel id="triggerChannel">
-        <int:queue capacity="100"/>
+    <int:channel id="request">
+        <int:queue capacity="10"/>
     </int:channel>
 
+    <int:service-activator input-channel="request" ref="serviceActivator" output-channel="response">
+        <int:poller fixed-rate="1000"/>
+    </int:service-activator>
 
-    <!--
-     the mapped-process-variables is interesting because it demonstrates that
-     customerId, customerFirstName, and customerLastName are mapped, while customerAge is not.
+    <int:channel id="response"/>
 
-     This of course could have been rewritten as customer*, to grab all of them.
 
-     Additionaly, the message send to this adapter has the name of the proces definition to start as a header,
-     ActivitiConstants#WELL_KNOWN_PROCESS_DEFINITION_NAME_HEADER_KEY. If it hadn't, then an error would have been thrown
-     because no process-definition attribute is specified on this adapter declaration, either.
+    <bean class="org.springframework.integration.activiti.utils.PrintingServiceActivator" id="serviceActivator"/>
 
-    -->
-    <activiti:outbound-channel-adapter channel="triggerChannel" process-engine="processEngine"  mapped-message-headers="customerId,customer*Name"/>
+
 
 </beans>
