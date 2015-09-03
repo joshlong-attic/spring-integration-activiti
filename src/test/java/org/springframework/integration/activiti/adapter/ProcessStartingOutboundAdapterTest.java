@@ -45,6 +45,8 @@ public class ProcessStartingOutboundAdapterTest extends AbstractSpringIntegratio
                                  .setHeader(ActivitiConstants.WELL_KNOWN_PROCESS_DEFINITION_NAME_HEADER_KEY, "hello")
                                  .build();
         messagingTemplate.send(this.messageChannel, msg);
+        
+        Thread.sleep(5000);
     }
 
 }

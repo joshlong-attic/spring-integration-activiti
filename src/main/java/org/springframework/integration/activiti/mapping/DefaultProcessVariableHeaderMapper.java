@@ -47,11 +47,6 @@ import java.util.*;
 public class DefaultProcessVariableHeaderMapper implements ProcessVariableHeaderMapper, InitializingBean {
 
     /**
-     * cached length of the header prefix
-     */
-    private int wellKnownHeaderPrefixLength;
-
-    /**
      * all headers that we want to forward as process variables. None, by default, as headers may be rich objects where as process variables <em>should</em> be lightweight (primitives, for example)
      */
     private String[] headerToProcessVariableNames = new String[0];
@@ -64,6 +59,11 @@ public class DefaultProcessVariableHeaderMapper implements ProcessVariableHeader
     private boolean shouldPrefixProcessVariables = false;
 
     private String prefix = ActivitiConstants.WELL_KNOWN_SPRING_INTEGRATION_HEADER_PREFIX;
+
+    /**
+     * cached length of the header prefix
+     */
+    private int wellKnownHeaderPrefixLength = this.prefix.length();
 
     private Log log = LogFactory.getLog(getClass());
 
